@@ -6,15 +6,13 @@ function Gameboard(){
             board[i].push(Cell());
         }
     }
-    const getBoard=()=>board;
-    const readBoard=()=>
+    const getBoardValues=()=>
         {return (board.map(row=>row.map(cell=>cell.getValue())))};
     const addSymbol=(row,column,player)=>{
     board[row][column].setValue(player);
       }
       return{
-        getBoard,
-        readBoard,
+        getBoardValues,
         addSymbol
     }
 }
@@ -41,9 +39,7 @@ function BoardController(){
     ]
     let activePlayer=players[0];
     const switchCurrentPlayer=()=>activePlayer=activePlayer===players[0]?players[1]:players[0];
-    const getCurrentPlayer=()=>activePlayer;
-    const checkWinner=(boardValues)=>{
-        const values=boardValues
+    const checkWinner=(values)=>{
         const winnings=[];
         for(let i=0;i<7;i+=3){winnings.push(values[i]+values[i+1]+values[i+2])}
         for(let i=0;i<3;i++){winnings.push(values[i]+values[i+3]+values[i+6])}
@@ -55,21 +51,22 @@ function BoardController(){
         return !boardValues.some(el=>el==='');
     }
     const playRound=(row,column)=>{
-        if (board.getBoard()[row][column].getValue()) return;
+        if (board.getBoardValues()[row][column]) return `${activePlayer.name} Turn`;
         board.addSymbol(row,column,activePlayer);
         //Check if player wins
-        if(checkWinner(board.readBoard().flat())) return `${activePlayer.name} wins!!!`
+        if(checkWinner(board.getBoardValues().flat())) 
+            {   
+                return `${activePlayer.name} wins!!!`
+            }
         //Check if it is a tie
-        if (checkTie(board.readBoard().flat())) return `It's a tie.`
+        if (checkTie(board.getBoardValues().flat())) return `It's a tie.`
         //Continue with the other player
         switchCurrentPlayer()
         return `${activePlayer.name} Turn`
     }
     return {
-        getCurrentPlayer,
         playRound,
-        getBoard:board.getBoard,
-        readBoard:board.readBoard
+        getBoardValues:board.getBoardValues
     }
 
 }
@@ -84,22 +81,23 @@ function ScreenController(){
         container.textContent='';
 
         //Render game cells
-        game.readBoard().forEach((row,i)=>row.forEach((cell,j)=>{
+        game.getBoardValues().forEach((row,i)=>row.forEach((cell,j)=>{
             const cellElement=document.createElement('button');
             cellElement.classList.add('cell');
-            cellElement.dataset.row=i;
-            cellElement.dataset.column=j;
+            cellElement.dataset.cell=`${i}${j}`
             cellElement.innerText=cell;
             container.appendChild(cellElement)
         }))
     }
 
     function clickHandlerBoard(e){
-        const row=e.target.dataset.row;
-        const column=e.target.dataset.column;
+        const cell=e.target.dataset.cell.split('');      
+        const roundResult=game.playRound(+cell[0],+cell[1]);
+        turn.innerText=roundResult;
 
-        turn.innerText=game.playRound(row,column);
-        updateScreen()
+        //Stop adding symbols in case of win or tie
+        if(roundResult.match(/win|tie/)) container.removeEventListener('click',clickHandlerBoard)
+        updateScreen();
     }
     container.addEventListener('click',clickHandlerBoard)
     updateScreen()
@@ -107,20 +105,4 @@ function ScreenController(){
 
 ScreenController()
 
-// const game=BoardController();
-// //x
-// game.playRound(2,2);
-// console.log(game.readBoard())
-// console.log(game.getCurrentPlayer())
-// //0
-// game.playRound(0,1);
-// console.log(game.readBoard())
-// //X
-// game.playRound(1,2);
-// console.log(game.readBoard())
-// //0
-// game.playRound(1,1);
-// console.log(game.readBoard())
-// //X
-// game.playRound(0,2);
-// console.log(game.readBoard())
+
