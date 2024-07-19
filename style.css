@@ -2,8 +2,14 @@ body{
     display: flex;
     flex-direction: column;
     margin-top: 30px;
+    gap:20px;
     align-items: center;
 }
+
+.player{
+    display:flex;
+    justify-content: space-between;
+    }
 
 .container{
     width:50%;

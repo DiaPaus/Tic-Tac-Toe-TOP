@@ -27,13 +27,13 @@ function Cell(){
     }
 }
 
-function BoardController(){
+function BoardController(playerOneName,playerTwoName){
     const board=Gameboard();
     const players=[
-        {name:'Player One',
+        {name:playerOneName,
             token:'X'
         },
-        {name:'Player Two',
+        {name:playerTwoName,
             token:'0'
         }
     ]
@@ -51,7 +51,7 @@ function BoardController(){
         return !boardValues.some(el=>el==='');
     }
     const playRound=(row,column)=>{
-        if (board.getBoardValues()[row][column]) return `${activePlayer.name} Turn`;
+        if (board.getBoardValues()[row][column]) return `${activePlayer.name}'s Turn`;
         board.addSymbol(row,column,activePlayer);
         //Check if player wins
         if(checkWinner(board.getBoardValues().flat())) 
@@ -62,7 +62,7 @@ function BoardController(){
         if (checkTie(board.getBoardValues().flat())) return `It's a tie.`
         //Continue with the other player
         switchCurrentPlayer()
-        return `${activePlayer.name} Turn`
+        return `${activePlayer.name}'s Turn`
     }
     return {
         playRound,
@@ -72,35 +72,48 @@ function BoardController(){
 }
 
 function ScreenController(){
-    const game=BoardController();
+    const firstPlayerElement=document.querySelector('#first-player');
+    const secondPlayerElement=document.querySelector('#second-player');
+    const startBtn=document.querySelector('.start');    
     const container=document.querySelector('.container');
     const turn=document.querySelector('.turn');
 
-    const updateScreen=()=>{
-        //Clear board
-        container.textContent='';
 
-        //Render game cells
-        game.getBoardValues().forEach((row,i)=>row.forEach((cell,j)=>{
-            const cellElement=document.createElement('button');
-            cellElement.classList.add('cell');
-            cellElement.dataset.cell=`${i}${j}`
-            cellElement.innerText=cell;
-            container.appendChild(cellElement)
-        }))
+    function startGameBtnHandler(){
+        const firstPlayer=firstPlayerElement.value?firstPlayerElement.value:'Player One'
+        const secondPlayer=secondPlayerElement.value?secondPlayerElement.value:'Player Two'
+        const game=BoardController(firstPlayer,secondPlayer);
+        turn.innerText=`${firstPlayer}'s Turn`;
+        const updateScreen=()=>{
+            //Clear board
+            container.textContent='';            
+            //Render game cells
+            game.getBoardValues().forEach((row,i)=>row.forEach((cell,j)=>{
+                const cellElement=document.createElement('button');
+                cellElement.classList.add('cell');
+                cellElement.dataset.cell=`${i}${j}`
+                cellElement.innerText=cell;
+                container.appendChild(cellElement)
+            }))
+        }
+    
+        function clickHandlerBoard(e){
+            const cell=e.target.dataset.cell.split('');      
+            const roundResult=game.playRound(+cell[0],+cell[1]);
+            turn.innerText=roundResult;
+    
+            //Stop adding symbols in case of win or tie
+            if(roundResult.match(/win|tie/)) {
+                container.removeEventListener('click',clickHandlerBoard);
+                firstPlayerElement.value='';
+                secondPlayerElement.value='';
+            }
+            updateScreen();
+        }
+        container.addEventListener('click',clickHandlerBoard)
+        updateScreen()
     }
-
-    function clickHandlerBoard(e){
-        const cell=e.target.dataset.cell.split('');      
-        const roundResult=game.playRound(+cell[0],+cell[1]);
-        turn.innerText=roundResult;
-
-        //Stop adding symbols in case of win or tie
-        if(roundResult.match(/win|tie/)) container.removeEventListener('click',clickHandlerBoard)
-        updateScreen();
-    }
-    container.addEventListener('click',clickHandlerBoard)
-    updateScreen()
+startBtn.addEventListener('click',startGameBtnHandler)
 }
 
 ScreenController()
